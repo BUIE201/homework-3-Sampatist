@@ -1,21 +1,26 @@
+//This is a homework for IE201 Course, Murat Öztürk 2019402093
+//I got the binary tree code from the lecture repo, then I changed the tree into being unsorted and randomly selected directions.
+//Afterwards I got rid of the useless functions for this homework. I used the same print function in the lecture repo to print the tree.
+//I changed the insert function significantly.
+//I had to add a variable called Max:int for all nodes. 
+
 #include <iostream>
 
 using namespace std;
 
 int max(int a, int b) { return a < b ? b : a;};
 
-
 struct Node
 {
 	int i;
 	Node* pLeft;
 	Node* pRight;
-	int Max;
+	int Max; //This gives the max sum from this node, its sign indicates direction: - is left + is right. Since max branch sum can not be smaller than 0 we can use this.
 
 	Node(int iIn) : i(iIn), pLeft(nullptr), pRight(nullptr), Max(0) {}
 };
 
-int InsertToTree(Node*& pRoot, Node* pNew)
+int InsertToTree(Node*& pRoot, Node* pNew)	//O(logn)		
 {
 	if (!pRoot)
 	{
@@ -23,19 +28,19 @@ int InsertToTree(Node*& pRoot, Node* pNew)
 		return pNew->i;
 	}
 
-	bool Direction = rand() % 2;
-	int CCD; //CumulativeDirectedDistance
-	if (Direction) //left 
+	bool Direction = rand() % 2;   //To not have a sorted and to have an approximately balanced tree the direction is chosen randomly. 
+	int CCD;		//CumulativeDirectedDistance
+	if (Direction)	//left 
 	{
-		CCD = -InsertToTree(pRoot->pLeft, pNew);
+		CCD = -InsertToTree(pRoot->pLeft, pNew);	//Take negative of the return value since it comes from the left node.
 		
-		if (pRoot->Max < 0)
+		if (pRoot->Max < 0)			//If maximum root is already from the left, then we can just put the improved or the same CCD to the root max.
 		{
-			pRoot->Max = CCD;
+			pRoot->Max = CCD;		
 		}
 		else 
 		{
-			if (pRoot->Max + CCD < 0)
+			if (pRoot->Max + CCD < 0)	//If Max is from the right then we have to look if this new CCD is better than the max. If the sum is minus then left sum is better than right sum.
 			{
 				pRoot->Max = CCD;
 			};
@@ -43,66 +48,25 @@ int InsertToTree(Node*& pRoot, Node* pNew)
 	}
 	else //right
 	{
-		CCD = InsertToTree(pRoot->pRight, pNew);
+		CCD = InsertToTree(pRoot->pRight, pNew);	//Take positive since it comes from right node.
 
-		if (pRoot->Max > 0)
+		if (pRoot->Max > 0)		//If maximum root is already from the right, then we can just put the improved or the same CCD to the root max.
 		{
 			pRoot->Max = CCD;
 		}
 		else
 		{
-			if (pRoot->Max + CCD > 0)
+			if (pRoot->Max + CCD > 0)	//If Max is from the left then we have to look if this new CCD is better than the max. If the sum is plus then right sum is better than left sum.
 			{
 				pRoot->Max = CCD;
 			};
 		}
 	}
 	
-	return abs(pRoot->Max) + pRoot->i;
+	return abs(pRoot->Max) + pRoot->i;	//This part is crucial, we take abs of Max but return index normally. By returning index normally and having those if's up there, this algorithm also works for minus numbers.
 }
 
-void DeleteNodeWithTwoChildren(Node*& q, Node*& p)
-{
-	if (p->pRight)
-	{
-		DeleteNodeWithTwoChildren(q, p->pRight);
-		return;
-	}
-
-	p->i = q->i;
-	q = p;
-	p = p->pLeft;
-}
-
-void DeleteNodeFromTree(Node*& pRoot, int i)
-{
-	if (!pRoot)
-		return;
-
-	if (pRoot->i < i)
-	{
-		DeleteNodeFromTree(pRoot->pRight, i);
-		return;
-	}
-
-	if (pRoot->i > i)
-	{
-		DeleteNodeFromTree(pRoot->pLeft, i);
-		return;
-	}
-
-	Node* q = pRoot;
-	if (!q->pRight)
-		pRoot = q->pLeft;
-	else if (!q->pLeft)
-		pRoot = q->pRight;
-	else
-		DeleteNodeWithTwoChildren(q, q->pLeft);
-
-	delete q;
-}
-
-void PrintTree(Node* pRoot, int Level)
+void PrintTree(Node* pRoot, int Level)	//O(n)
 {
 	if (!pRoot)
 		return;
@@ -116,26 +80,13 @@ void PrintTree(Node* pRoot, int Level)
 	PrintTree(pRoot->pLeft, Level + 1);
 }
 
-void Insert(Node*& pRoot, Node* pNewNode)
-{
-	if (!pRoot)
-		pRoot = pNewNode;
-	else
-	{
-		if (pNewNode->i < pRoot->i)
-			Insert(pRoot->pLeft, pNewNode);
-		else
-			Insert(pRoot->pRight, pNewNode);
-	}
-}
-
-void PrintMaxRouteSum(Node*& pRoot)
+void PrintMaxRouteSum(Node*& pRoot)	//O(1)
 {
 	int result = pRoot->i + abs(pRoot->Max);
 	std::cout << result << std::endl;
 }
 
-void PrintMaxRoute(Node*& pRoot)
+void PrintMaxRoute(Node*& pRoot)	//O(logn)
 {
 	if (!pRoot)
 		return;
@@ -151,23 +102,50 @@ void PrintMaxRoute(Node*& pRoot)
 	}
 }
 
+void PrintAnswerFormat(Node*& pRoot, bool PrintTree_B = 1)
+{
+	if(PrintTree_B)
+		PrintTree(pRoot, 1);
+
+	cout << "Branch with the largest sum is: ";
+	PrintMaxRoute(pRoot);
+	cout << "-> SUM = ";
+	PrintMaxRouteSum(pRoot);
+}
+
 void main()
 {
-	int i = 0;
 	Node* pRoot = nullptr;
+
+	int i = 16;
 	while (true)
 	{
-		//cin >> i;
-
 		Node* p = new Node(i);
 		InsertToTree(pRoot, p);
-		i += 1;
-		if (i == 20)
+		i -= 1;
+		if (i == 0)
 			break;
 	}
 
-	PrintTree(pRoot, 1);
-	PrintMaxRouteSum(pRoot);
-	PrintMaxRoute(pRoot);
-	//IT EVEN WORKS ON NEGATIVE VALUES!!!! 
+	i = -256;
+	while (true)
+	{
+		Node* p = new Node(i);
+		InsertToTree(pRoot, p);
+		i += 1;
+		if (i == 1)
+			break;
+	}
+
+	i = 0;
+	while (true)
+	{
+		Node* p = new Node(i);
+		InsertToTree(pRoot, p);
+		i += 1;
+		if (i == 256)
+			break;
+	}
+
+	PrintAnswerFormat(pRoot, 1);
 }
